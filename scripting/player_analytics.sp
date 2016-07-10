@@ -3,7 +3,7 @@
 #include <sourcemod>
 #include <geoip>
 #undef REQUIRE_EXTENSIONS
-#include <steamtools>
+#include <SteamWorks>
 #include <geoipcity>
 
 #define PLUGIN_VERSION		"1.3.1"
@@ -17,8 +17,8 @@ enum OS {
 };	
 
 public Plugin:myinfo = {
-	name		= "[ANY] Player Analytics",
-	author		= "Dr. McKay",
+	name		= "Player Analytics",
+	author		= "Dr. McKay / Bara",
 	description	= "Logs analytical data about connecting players",
 	version		= PLUGIN_VERSION,
 	url			= "http://www.doctormckay.com"
@@ -29,7 +29,6 @@ public Plugin:myinfo = {
 #if !defined DEBUG
 new Handle:g_DB;
 #endif
-new bool:g_SteamTools;
 new String:g_IP[64];
 new String:g_GameFolder[64];
 new Handle:g_OSGamedata;
@@ -44,15 +43,6 @@ new Handle:g_MOTDTimer[MAXPLAYERS + 1];
 new OS:g_OS[MAXPLAYERS + 1];
 new Handle:g_OSTimer[MAXPLAYERS + 1];
 new g_OSQueries[MAXPLAYERS + 1];
-
-#define STEAMTOOLS_AVAILABLE() (g_SteamTools && GetFeatureStatus(FeatureType_Native, "Steam_IsConnected") == FeatureStatus_Available)
-
-#if !defined DEBUG
-#define UPDATE_FILE		"player_analytics.txt"
-#define CONVAR_PREFIX	"player_analytics"
-
-#include "mckayupdater.sp"
-#endif
 
 public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max) {
 	MarkNativeAsOptional("Steam_GetNumClientSubscriptions");
@@ -92,10 +82,8 @@ public OnTableCreated(Handle:owner, Handle:hndl, const String:error[], any:data)
 #endif
 
 public OnPluginStart() {
-	if(!g_SteamTools || !Steam_IsConnected()) {
-		new ip = GetConVarInt(FindConVar("hostip"));
-		Format(g_IP, sizeof(g_IP), "%d.%d.%d.%d:%d", ((ip & 0xFF000000) >> 24) & 0xFF, ((ip & 0x00FF0000) >> 16) & 0xFF, ((ip & 0x0000FF00) >>  8) & 0xFF, ((ip & 0x000000FF) >>  0) & 0xFF, GetConVarInt(FindConVar("hostport")));
-	}
+	new ip = SteamWorks_GetPublicIPCell();
+	Format(g_IP, sizeof(g_IP), "%d.%d.%d.%d:%d", ((ip & 0xFF000000) >> 24) & 0xFF, ((ip & 0x00FF0000) >> 16) & 0xFF, ((ip & 0x0000FF00) >>  8) & 0xFF, ((ip & 0x000000FF) >>  0) & 0xFF, GetConVarInt(FindConVar("hostport")));
 	
 	GetGameFolderName(g_GameFolder, sizeof(g_GameFolder));
 	g_OSGamedata = LoadGameConfigFile("detect_os.games");
@@ -106,20 +94,6 @@ public OnPluginStart() {
 		GameConfGetKeyValue(g_OSGamedata, "Convar_Mac", g_OSConVar[OS_Mac], sizeof(g_OSConVar[]));
 		GameConfGetKeyValue(g_OSGamedata, "Convar_Linux", g_OSConVar[OS_Linux], sizeof(g_OSConVar[]));
 	}
-}
-
-public Steam_SteamServersConnected() {
-	new octets[4];
-	Steam_GetPublicIP(octets);
-	Format(g_IP, sizeof(g_IP), "%d.%d.%d.%d:%d", octets[0], octets[1], octets[2], octets[3], GetConVarInt(FindConVar("hostport")));
-}
-
-public Steam_FullyLoaded() {
-	g_SteamTools = true;
-}
-
-public Steam_Shutdown() {
-	g_SteamTools = false;
 }
 
 public OnClientConnected(client) {
@@ -243,7 +217,7 @@ public Action:Timer_HandleConnect(Handle:timer, any:userid) {
 	FormatTime(date, sizeof(date), "%Y-%m-%d");
 	GetCurrentMap(map, sizeof(map));
 	GetClientName(client, buffers[0], sizeof(buffers[]));
-	GetClientAuthString(client, buffers[1], sizeof(buffers[]));
+	GetClientAuthId(client, AuthId_Steam3, buffers[1], sizeof(buffers[]));
 	new num = FlagBitsToArray(GetUserFlagBits(client), flags, sizeof(flags));
 	for(new i = 0; i < num; i++) {
 		new flagchar;
@@ -262,14 +236,6 @@ public Action:Timer_HandleConnect(Handle:timer, any:userid) {
 	strcopy(buffers[4], sizeof(buffers[]), country_name);
 	strcopy(buffers[5], sizeof(buffers[]), country_code);
 	strcopy(buffers[6], sizeof(buffers[]), country_code3);
-	
-	if(STEAMTOOLS_AVAILABLE() && StrEqual(g_GameFolder, "tf")) {
-		if(Steam_CheckClientSubscription(client, 0) && !Steam_CheckClientDLC(client, 459)) {
-			strcopy(buffers[7], sizeof(buffers[]), "0");
-		} else {
-			strcopy(buffers[7], sizeof(buffers[]), "1");
-		}
-	}
 	
 	if(g_MOTDDisabled[client] != -1) {
 		IntToString(g_MOTDDisabled[client], buffers[8], sizeof(buffers[]));
