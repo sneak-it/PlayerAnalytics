@@ -217,7 +217,7 @@ public Action:Timer_HandleConnect(Handle:timer, any:userid) {
 	FormatTime(date, sizeof(date), "%Y-%m-%d");
 	GetCurrentMap(map, sizeof(map));
 	GetClientName(client, buffers[0], sizeof(buffers[]));
-	GetClientAuthId(client, AuthId_Steam3, buffers[1], sizeof(buffers[]));
+	GetClientAuthId(client, AuthId_Steam2, buffers[1], sizeof(buffers[]));
 	new num = FlagBitsToArray(GetUserFlagBits(client), flags, sizeof(flags));
 	for(new i = 0; i < num; i++) {
 		new flagchar;
