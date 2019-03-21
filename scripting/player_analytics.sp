@@ -99,7 +99,7 @@ public void OnPluginStart() {
 	}
 }
 
-public void OnClientConnected(client) {
+public void OnClientConnected(int client) {
 	if(IsFakeClient(client)) {
 		return;
 	}
@@ -123,7 +123,7 @@ public void OnClientConnected(client) {
 	}
 }
 
-public void OnClientPutInServer(client) {
+public void OnClientPutInServer(int client) {
 	if(IsFakeClient(client)) {
 		return;
 	}
