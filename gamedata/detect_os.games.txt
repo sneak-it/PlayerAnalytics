@@ -25,7 +25,7 @@
 		{
 			"Convar_Windows"	"windows_speaker_config"
 			"Convar_Linux"		"joy_gamecontroller_config"
-			"Convar_Mac"		"mac_fsbackground"
+			"Convar_Mac"		"mat_osx_force_csm_enabled"
 		}
 	}
 	
