@@ -23,7 +23,7 @@
 	{
 		"Keys"
 		{
-			"Convar_Windows"	"windows_speaker_config"
+			"Convar_Windows"	"voice_mixer_volume"
 			"Convar_Linux"		"joy_gamecontroller_config"
 			"Convar_Mac"		"mat_osx_force_csm_enabled"
 		}
