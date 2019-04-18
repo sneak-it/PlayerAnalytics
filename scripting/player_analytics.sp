@@ -6,7 +6,7 @@
 #include <geoipcity>
 #include <SteamWorks>
 
-#define PLUGIN_VERSION		"1.3.1"
+#define PLUGIN_VERSION		"1.4.0"
 
 enum OS {
 	OS_Unknown = -1,
@@ -18,7 +18,7 @@ enum OS {
 
 public Plugin myinfo = {
 	name		= "Player Analytics",
-	author		= "Dr. McKay / Bara",
+	author		= "Dr. McKay / Bara / sneaK",
 	description	= "Logs analytical data about connecting players",
 	version		= PLUGIN_VERSION,
 	url			= "http://www.doctormckay.com"
