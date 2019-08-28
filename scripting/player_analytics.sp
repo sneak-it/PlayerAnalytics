@@ -93,7 +93,7 @@ public void OnPluginStart() {
 		GameConfGetKeyValue(g_OSGamedata, "Convar_Linux", g_OSConVar[OS_Linux], sizeof(g_OSConVar[]));
 	}
 
-	if(!STEAMWORKS_AVAILABLE() && !SteamWorks_IsLoaded())
+	if(!STEAMWORKS_AVAILABLE())
 	{
 		LogMessage("SteamWorks extension not found, prime status logging will be unavailable");
 	}
