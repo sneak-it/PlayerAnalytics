@@ -6,7 +6,7 @@
 #include <geoipcity>
 #include <SteamWorks>
 
-#define PLUGIN_VERSION		"1.4.1"
+#define PLUGIN_VERSION		"1.4.2"
 
 enum OS {
 	OS_Unknown = -1,
@@ -47,9 +47,6 @@ int g_OSQueries[MAXPLAYERS + 1];
 #define STEAMWORKS_AVAILABLE() (GetFeatureStatus(FeatureType_Native, "SteamWorks_IsLoaded") == FeatureStatus_Available)
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max) {
-	MarkNativeAsOptional("SteamWorks_IsLoaded");
-	MarkNativeAsOptional("SteamWorks_HasLicenseForApp");
-
 #if !defined DEBUG
 	if(SQL_CheckConfig("player_analytics")) {
 		g_DB = SQL_Connect("player_analytics", true, error, err_max);
@@ -92,8 +89,10 @@ public void OnPluginStart() {
 		GameConfGetKeyValue(g_OSGamedata, "Convar_Mac", g_OSConVar[OS_Mac], sizeof(g_OSConVar[]));
 		GameConfGetKeyValue(g_OSGamedata, "Convar_Linux", g_OSConVar[OS_Linux], sizeof(g_OSConVar[]));
 	}
+}
 
-	if(!STEAMWORKS_AVAILABLE())
+public void OnAllPluginsLoaded() {
+	if (!STEAMWORKS_AVAILABLE())
 	{
 		LogMessage("SteamWorks extension not found, prime status logging will be unavailable");
 	}
@@ -249,7 +248,7 @@ public Action Timer_HandleConnect(Handle timer, any userid) {
 	strcopy(buffers[5], sizeof(buffers[]), country_code);
 	strcopy(buffers[6], sizeof(buffers[]), country_code3);
 	
-	if(STEAMWORKS_AVAILABLE() && StrEqual(g_GameFolder, "csgo")) {
+	if(STEAMWORKS_AVAILABLE() && SteamWorks_IsLoaded() && StrEqual(g_GameFolder, "csgo")) {
 		if(k_EUserHasLicenseResultDoesNotHaveLicense == SteamWorks_HasLicenseForApp(client, 624820)) {
 			strcopy(buffers[7], sizeof(buffers[]), "0");
 		} else {
