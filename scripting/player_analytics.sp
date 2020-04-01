@@ -3,10 +3,9 @@
 #include <sourcemod>
 #include <geoip>
 #undef REQUIRE_EXTENSIONS
-#include <geoipcity>
 #include <SteamWorks>
 
-#define PLUGIN_VERSION		"1.4.2"
+#define PLUGIN_VERSION		"1.4.2-geoip2"
 
 enum OS {
 	OS_Unknown = -1,
@@ -237,10 +236,12 @@ public Action Timer_HandleConnect(Handle timer, any userid) {
 	}
 	flagstring[num] = '\0';
 	GetClientIP(client, ip, sizeof(ip));
-	
-	if(GetFeatureStatus(FeatureType_Native, "GeoipGetRecord") != FeatureStatus_Available || !GeoipGetRecord(ip, city, region, country_name, country_code, country_code3)) {
-		GeoipCountry(ip, country_name, sizeof(country_name));
-	}
+
+	GeoipCity(ip, city, sizeof(city));
+	GeoipRegion(ip, region, sizeof(region));
+	GeoipCountry(ip, country_name, sizeof(country_name));
+	GeoipCode2(ip, country_code);
+	GeoipCode3(ip, country_code3);
 	
 	strcopy(buffers[2], sizeof(buffers[]), city);
 	strcopy(buffers[3], sizeof(buffers[]), region);
