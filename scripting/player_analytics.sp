@@ -58,7 +58,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	}
 	
 	SQL_SetCharset(g_DB, "utf8mb4");
-	SQL_TQuery(g_DB, OnTableCreated, "CREATE TABLE IF NOT EXISTS `player_analytics` (id int(11) NOT NULL AUTO_INCREMENT, server_ip varchar(32) NOT NULL, name varchar(64), auth varchar(32), connect_time int(11) NOT NULL, connect_date date NOT NULL, connect_method varchar(64) DEFAULT NULL, numplayers tinyint(4) NOT NULL, map varchar(64) NOT NULL, duration int(11) DEFAULT NULL, flags varchar(32) NOT NULL, ip varchar(32) NOT NULL, city varchar(45), region varchar(45), country varchar(45), country_code varchar(2), country_code3 varchar(3), premium tinyint(1), html_motd_disabled tinyint(1), os varchar(32), PRIMARY KEY (id)) ENGINE=InnoDB  DEFAULT CHARSET=utf8");
+	SQL_TQuery(g_DB, OnTableCreated, "CREATE TABLE IF NOT EXISTS `player_analytics` (id int(11) NOT NULL AUTO_INCREMENT, server_ip varchar(32) NOT NULL, name varchar(64), steamid3 int(11), connect_time int(11) NOT NULL, connect_date date NOT NULL, connect_method varchar(64) DEFAULT NULL, numplayers tinyint(4) NOT NULL, map varchar(64) NOT NULL, duration int(11) DEFAULT NULL, flags varchar(32) NOT NULL, ip varchar(32) NOT NULL, city varchar(45), region varchar(45), country varchar(45), country_code varchar(2), country_code3 varchar(3), premium tinyint(1), html_motd_disabled tinyint(1), os varchar(32), PRIMARY KEY (id)) ENGINE=InnoDB  DEFAULT CHARSET=utf8");
 #endif
 	
 	RegPluginLibrary("player_analytics");
@@ -227,7 +227,7 @@ public Action Timer_HandleConnect(Handle timer, any userid) {
 	FormatTime(date, sizeof(date), "%Y-%m-%d");
 	GetCurrentMap(map, sizeof(map));
 	GetClientName(client, buffers[0], sizeof(buffers[]));
-	GetClientAuthId(client, AuthId_Steam2, buffers[1], sizeof(buffers[]));
+	int iSteamID = GetSteamAccountID(client);
 	int num = FlagBitsToArray(GetUserFlagBits(client), flags, sizeof(flags));
 	for(int i = 0; i < num; i++) {
 		int flagchar;
@@ -282,8 +282,8 @@ public Action Timer_HandleConnect(Handle timer, any userid) {
 	}
 	
 	char query[512];
-	Format(query, sizeof(query), "INSERT INTO `player_analytics` SET server_ip = '%s', name = %s, auth = %s, connect_time = %d, connect_date = '%s', connect_method = %s, numplayers = %d, map = '%s', flags = '%s', ip = '%s', city = %s, region = %s, country = %s, country_code = %s, country_code3 = %s, premium = %s, html_motd_disabled = %s, os = %s",
-		g_IP, escapedBuffers[0], escapedBuffers[1], g_ConnectTime[client], date, g_ConnectMethod[client], g_NumPlayers[client], map, flagstring, ip, escapedBuffers[2], escapedBuffers[3], escapedBuffers[4], escapedBuffers[5], escapedBuffers[6], escapedBuffers[7], escapedBuffers[8], escapedBuffers[9]);
+	Format(query, sizeof(query), "INSERT INTO `player_analytics` SET server_ip = '%s', name = %s, steamid3 = %i, connect_time = %d, connect_date = '%s', connect_method = %s, numplayers = %d, map = '%s', flags = '%s', ip = '%s', city = %s, region = %s, country = %s, country_code = %s, country_code3 = %s, premium = %s, html_motd_disabled = %s, os = %s",
+		g_IP, escapedBuffers[0], iSteamID, g_ConnectTime[client], date, g_ConnectMethod[client], g_NumPlayers[client], map, flagstring, ip, escapedBuffers[2], escapedBuffers[3], escapedBuffers[4], escapedBuffers[5], escapedBuffers[6], escapedBuffers[7], escapedBuffers[8], escapedBuffers[9]);
 	
 #if !defined DEBUG
 	SQL_TQuery(g_DB, OnRowInserted, query, GetClientUserId(client));
