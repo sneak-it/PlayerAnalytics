@@ -5,7 +5,7 @@
 #undef REQUIRE_EXTENSIONS
 #include <SteamWorks>
 
-#define PLUGIN_VERSION		"1.4.2"
+#define PLUGIN_VERSION		"1.4.3"
 
 enum OS {
 	OS_Unknown = -1,
@@ -236,6 +236,10 @@ public Action Timer_HandleConnect(Handle timer, any userid) {
 	}
 	flagstring[num] = '\0';
 	GetClientIP(client, ip, sizeof(ip));
+	
+	GeoipCode2(ip, country_code);
+	GeoipCode3(ip, country_code3);
+	GeoipCountry(ip, country_name, sizeof(country_name));
 	
 	if(GetFeatureStatus(FeatureType_Native, "GeoipCity") == FeatureStatus_Available)
 	{
