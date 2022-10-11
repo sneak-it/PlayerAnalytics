@@ -3,7 +3,6 @@
 #include <sourcemod>
 #include <geoip>
 #undef REQUIRE_EXTENSIONS
-#include <geoipcity>
 #include <SteamWorks>
 
 #define PLUGIN_VERSION		"1.4.2"
@@ -238,10 +237,12 @@ public Action Timer_HandleConnect(Handle timer, any userid) {
 	flagstring[num] = '\0';
 	GetClientIP(client, ip, sizeof(ip));
 	
-	if(GetFeatureStatus(FeatureType_Native, "GeoipGetRecord") != FeatureStatus_Available || !GeoipGetRecord(ip, city, region, country_name, country_code, country_code3)) {
-		GeoipCountry(ip, country_name, sizeof(country_name));
+	if(GetFeatureStatus(FeatureType_Native, "GeoipCity") == FeatureStatus_Available)
+	{
+		GeoipRegion(ip, region, sizeof(region));
+		GeoipCity(ip, city, sizeof(city));
 	}
-	
+
 	strcopy(buffers[2], sizeof(buffers[]), city);
 	strcopy(buffers[3], sizeof(buffers[]), region);
 	strcopy(buffers[4], sizeof(buffers[]), country_name);
