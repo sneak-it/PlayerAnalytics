@@ -284,8 +284,8 @@ public Action Timer_HandleConnect(Handle timer, any userid) {
 			Format(escapedBuffers[i], sizeof(escapedBuffers[]), "'%s'", escapedBuffers[i]);
 		}
 	}
-	
-	char query[512];
+
+	char query[1024];
 	Format(query, sizeof(query), "INSERT INTO `player_analytics` SET server_ip = '%s', name = %s, steamid3 = %i, connect_time = %d, connect_date = '%s', connect_method = %s, numplayers = %d, map = '%s', flags = '%s', ip = '%s', city = %s, region = %s, country = %s, country_code = %s, country_code3 = %s, premium = %s, html_motd_disabled = %s, os = %s",
 		g_IP, escapedBuffers[0], iSteamID, g_ConnectTime[client], date, g_ConnectMethod[client], g_NumPlayers[client], map, flagstring, ip, escapedBuffers[2], escapedBuffers[3], escapedBuffers[4], escapedBuffers[5], escapedBuffers[6], escapedBuffers[7], escapedBuffers[8], escapedBuffers[9]);
 	
