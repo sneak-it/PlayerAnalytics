@@ -219,11 +219,12 @@ public void OnMOTDQueried(QueryCookie cookie, int client, ConVarQueryResult resu
 public Action Timer_MOTDTimeout(Handle timer, any userid) {
 	int client = GetClientOfUserId(userid);
 	if(client == 0) {
-		return;
+		return Plugin_Stop;
 	}
 	
 	g_MOTDDisabled[client] = -1;
 	g_MOTDTimer[client] = INVALID_HANDLE;
+	return Plugin_Stop;
 }
 
 public void OnOSQueried(QueryCookie cookie, int client, ConVarQueryResult result, const char[] cvarName, const char[] cvarValue) {
@@ -254,10 +255,11 @@ public void OnOSQueried(QueryCookie cookie, int client, ConVarQueryResult result
 public Action Timer_OSTimeout(Handle timer, any userid) {
 	int client = GetClientOfUserId(userid);
 	if(client == 0) {
-		return;
+		return Plugin_Stop;
 	}
 	
 	g_OSTimer[client] = INVALID_HANDLE;
+	return Plugin_Stop;
 }
 
 public void OnClientPostAdminCheck(int client) {
