@@ -29,6 +29,7 @@ public Plugin myinfo = {
 Handle g_DB;
 #endif
 char g_IP[64];
+bool g_IPResolved;
 char g_GameFolder[64];
 Handle g_OSGamedata;
 char g_OSConVar[OS_Total][64];
@@ -76,8 +77,8 @@ public OnTableCreated(Handle:owner, Handle:hndl, const String:error[], any:data)
 #endif
 
 public void OnPluginStart() {
-	int ip = GetConVarInt(FindConVar("hostip"));
-	Format(g_IP, sizeof(g_IP), "%d.%d.%d.%d:%d", ((ip & 0xFF000000) >> 24) & 0xFF, ((ip & 0x00FF0000) >> 16) & 0xFF, ((ip & 0x0000FF00) >>  8) & 0xFF, ((ip & 0x000000FF) >>  0) & 0xFF, GetConVarInt(FindConVar("hostport")));
+	UpdateServerIP();
+	RegServerCmd("pa_serverip", Command_ServerIP, "Prints the server IP player_analytics logs, and each source it tries");
 	
 	GetGameFolderName(g_GameFolder, sizeof(g_GameFolder));
 	g_OSGamedata = LoadGameConfigFile("detect_os.games");
@@ -89,6 +90,71 @@ public void OnPluginStart() {
 		GameConfGetKeyValue(g_OSGamedata, "Convar_Linux", g_OSConVar[OS_Linux], sizeof(g_OSConVar[]));
 	}
 }
+
+// Resolution order: hostip (reads 0 whenever srcds binds 0.0.0.0), Steam's view
+// of our public address, then net_public_adr for NAT'd hosts that set it.
+void UpdateServerIP() {
+	if(g_IPResolved) {
+		return;
+	}
+	
+	char ip[32] = "0.0.0.0";
+	int octets[4];
+	ConVar cvar = FindConVar("hostip");
+	int hostip = (cvar == null) ? 0 : GetConVarInt(cvar);
+	
+	if(hostip != 0) {
+		FormatEx(ip, sizeof(ip), "%d.%d.%d.%d", (hostip >> 24) & 0xFF, (hostip >> 16) & 0xFF, (hostip >> 8) & 0xFF, hostip & 0xFF);
+		g_IPResolved = true;
+	} else if(GetFeatureStatus(FeatureType_Native, "SteamWorks_GetPublicIP") == FeatureStatus_Available && SteamWorks_GetPublicIP(octets) && octets[0] != 0) {
+		FormatEx(ip, sizeof(ip), "%d.%d.%d.%d", octets[0], octets[1], octets[2], octets[3]);
+		g_IPResolved = true;
+	} else if((cvar = FindConVar("net_public_adr")) != null) {
+		GetConVarString(cvar, ip, sizeof(ip));
+		int colon = FindCharInString(ip, ':');
+		if(colon != -1) {
+			ip[colon] = '\0';
+		}
+		g_IPResolved = (ip[0] != '\0');
+		if(!g_IPResolved) {
+			strcopy(ip, sizeof(ip), "0.0.0.0");
+		}
+	}
+	
+	cvar = FindConVar("hostport");
+	Format(g_IP, sizeof(g_IP), "%s:%d", ip, (cvar == null) ? 0 : GetConVarInt(cvar));
+}
+
+public Action Command_ServerIP(int args) {
+	UpdateServerIP();
+	PrintToServer("[player_analytics] logging server_ip as '%s' (resolved: %s)", g_IP, g_IPResolved ? "yes" : "no");
+	
+	ConVar cvar = FindConVar("hostip");
+	PrintToServer("  hostip: %s", cvar == null ? "convar missing" : "present");
+	if(cvar != null) {
+		PrintToServer("  hostip value: %d", GetConVarInt(cvar));
+	}
+	
+	bool steamworks = GetFeatureStatus(FeatureType_Native, "SteamWorks_GetPublicIP") == FeatureStatus_Available;
+	PrintToServer("  SteamWorks_GetPublicIP: %s", steamworks ? "available" : "unavailable");
+	if(steamworks) {
+		int octets[4];
+		bool ok = SteamWorks_GetPublicIP(octets);
+		PrintToServer("  SteamWorks public IP: %d.%d.%d.%d (returned %s)", octets[0], octets[1], octets[2], octets[3], ok ? "true" : "false");
+	}
+	
+	char buffer[64];
+	cvar = FindConVar("net_public_adr");
+	if(cvar == null) {
+		PrintToServer("  net_public_adr: convar missing");
+	} else {
+		GetConVarString(cvar, buffer, sizeof(buffer));
+		PrintToServer("  net_public_adr: '%s'", buffer);
+	}
+	
+	return Plugin_Handled;
+}
+
 
 public void OnAllPluginsLoaded() {
 	if (!STEAMWORKS_AVAILABLE())
@@ -212,6 +278,8 @@ public Action Timer_HandleConnect(Handle timer, any userid) {
 		return Plugin_Continue;
 	}
 
+	UpdateServerIP();
+	
 	char date[64];
 	char map[64];
 	new AdminFlag:flags[32];
